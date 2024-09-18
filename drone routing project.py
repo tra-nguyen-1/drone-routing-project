@@ -4,11 +4,11 @@ from geopy.distance import geodesic
 # Define constants for drone operation
 MAX_BATTERY_LIFE = 30  # in minutes
 MAX_RANGE = 15  # in kilometers
-RECHARGE_STATION_LOCATIONS = [(30.000, 115.000), (30.500, 115.500)] 
+RECHARGE_STATION_LOCATIONS = [(40.000, 115.000), (40.500, 115.500)]
 BASE_LOCATION = (30.000, 115.000)  # Base coordinates
 WEATHER_CONDITIONS = ["Clear", "Windy", "Rainy", "Stormy"]
 
-# Simulate getting the current weather condition 
+# Simulate getting the current weather condition
 def get_current_weather():
     return random.choice(WEATHER_CONDITIONS)
 
@@ -36,6 +36,18 @@ def find_nearest_recharge_station(current_location):
     closest_station = min(RECHARGE_STATION_LOCATIONS, key=lambda x: calculate_distance(current_location, x))
     return closest_station
 
+# Simulate checking signal strength
+def check_signal():
+    return random.randint(0, 100)  # Signal strength as a percentage (0-100). The signal strength will be random for now.
+
+# Handle signal coverage issues
+def handle_signal_coverage(signal_strength, current_location):
+    if signal_strength < 20:  # If signal is weak, drone needs to return to the last known point
+        print(f"Low signal detected: {signal_strength}%. Returning to last known point.")
+        return_to_base(current_location)
+        return False  # Stop the journey due to signal loss
+    return True
+
 # Handle the delivery process
 def handle_delivery(destination):
     current_location = BASE_LOCATION
@@ -45,6 +57,11 @@ def handle_delivery(destination):
     weather = get_current_weather()
     if not check_weather_conditions(weather):
         return_to_base(current_location)
+        return
+
+    # Check signal strength before starting the journey
+    signal_strength = check_signal()
+    if not handle_signal_coverage(signal_strength, current_location):
         return
 
     # Check if the drone can reach the delivery point
@@ -59,7 +76,12 @@ def handle_delivery(destination):
         print(f"Recharging at station {recharge_station}.")
         current_location = recharge_station
         battery_life = MAX_BATTERY_LIFE
+
         # After recharging, try to deliver again
+        signal_strength = check_signal()
+        if not handle_signal_coverage(signal_strength, current_location):
+            return
+        
         if can_reach_destination(current_location, destination, battery_life):
             print(f"Delivering to {destination} from {current_location}.")
             distance = calculate_distance(current_location, destination)
