@@ -8,7 +8,7 @@ RECHARGE_STATION_LOCATIONS = [(40.000, 115.000), (40.500, 115.500)]
 BASE_LOCATION = (30.000, 115.000)  # Base coordinates
 WEATHER_CONDITIONS = ["Clear", "Windy", "Rainy", "Stormy"]
 
-# Simulate getting the current weather condition
+# Simulate getting the current weather condition 
 def get_current_weather():
     return random.choice(WEATHER_CONDITIONS)
 
@@ -27,7 +27,10 @@ def calculate_distance(point1, point2):
 def can_reach_destination(current_location, destination, battery_life):
     distance = calculate_distance(current_location, destination)
     required_battery = (distance / MAX_RANGE) * MAX_BATTERY_LIFE
-    if distance > MAX_RANGE or battery_life < required_battery:
+    
+    # Remove hard constraint of MAX_RANGE and only focus on battery life
+    if battery_life < required_battery:
+        print(f"Not enough battery to reach destination. Battery required: {required_battery:.2f} minutes, Battery remaining: {battery_life:.2f} minutes.")
         return False
     return True
 
