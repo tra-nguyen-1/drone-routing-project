@@ -28,7 +28,6 @@ def can_reach_destination(current_location, destination, battery_life):
     distance = calculate_distance(current_location, destination)
     required_battery = (distance / MAX_RANGE) * MAX_BATTERY_LIFE
     
-    # Remove hard constraint of MAX_RANGE and only focus on battery life
     if battery_life < required_battery:
         print(f"Not enough battery to reach destination. Battery required: {required_battery:.2f} minutes, Battery remaining: {battery_life:.2f} minutes.")
         return False
@@ -41,7 +40,7 @@ def find_nearest_recharge_station(current_location):
 
 # Simulate checking signal strength
 def check_signal():
-    return random.randint(0, 100)  # Signal strength as a percentage (0-100). The signal strength will be random for now.
+    return random.randint(0, 100)  # Signal strength as a percentage (0-100)
 
 # Handle signal coverage issues
 def handle_signal_coverage(signal_strength, current_location):
@@ -50,6 +49,12 @@ def handle_signal_coverage(signal_strength, current_location):
         return_to_base(current_location)
         return False  # Stop the journey due to signal loss
     return True
+
+# Avoid obstacle logic
+def avoid_obstacle(current_location, obstacle_location, obstacle_size):
+    adjusted_location = (current_location[0], current_location[1] + obstacle_size)
+    print(f"Obstacle detected at {obstacle_location} with size {obstacle_size} km. Adjusting route to {adjusted_location}.")
+    return adjusted_location
 
 # Handle the delivery process
 def handle_delivery(destination):
@@ -67,8 +72,22 @@ def handle_delivery(destination):
     if not handle_signal_coverage(signal_strength, current_location):
         return
 
+    # Get obstacle input from user
+    obstacle_input = input("Is there an obstacle? (yes/no): ").strip().lower()
+    obstacle_location = None
+    obstacle_size = 0
+
+    if obstacle_input == 'yes':
+        obstacle_lat = float(input("Enter the latitude of the obstacle: "))
+        obstacle_lon = float(input("Enter the longitude of the obstacle: "))
+        obstacle_size = float(input("Enter the size of the obstacle (in km): "))
+        obstacle_location = (obstacle_lat, obstacle_lon)
+
     # Check if the drone can reach the delivery point
     if can_reach_destination(current_location, destination, battery_life):
+        if obstacle_location:
+            current_location = avoid_obstacle(current_location, obstacle_location, obstacle_size)
+
         print(f"Delivering to {destination} from {current_location}.")
         distance = calculate_distance(current_location, destination)
         battery_life -= (distance / MAX_RANGE) * MAX_BATTERY_LIFE
@@ -86,6 +105,9 @@ def handle_delivery(destination):
             return
         
         if can_reach_destination(current_location, destination, battery_life):
+            if obstacle_location:
+                current_location = avoid_obstacle(current_location, obstacle_location, obstacle_size)
+                
             print(f"Delivering to {destination} from {current_location}.")
             distance = calculate_distance(current_location, destination)
             battery_life -= (distance / MAX_RANGE) * MAX_BATTERY_LIFE
